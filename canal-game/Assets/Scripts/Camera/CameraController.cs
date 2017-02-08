@@ -8,6 +8,8 @@ public class CameraController : MonoBehaviour
 
     #region Properties
 
+    Coroutine _move;
+
     Camera _camera;
 
     [SerializeField]
@@ -42,8 +44,16 @@ public class CameraController : MonoBehaviour
         return null;
     }
 
+    void MoveToTarget(Transform target, Action<string> onFail)
+    {
+        if(_move != null)
+        {
+            StopCoroutine(_move);
+        }
+        _move = StartCoroutine(Move(target,onFail));
+    }
 
-    void MoveToTarget(Transform target, Action<string> onFailure)
+    IEnumerator Move(Transform target, Action<string> onFail)
     {
         if (target)
         {
@@ -51,14 +61,16 @@ public class CameraController : MonoBehaviour
             Vector3 delta = target.position - _camera.ViewportToWorldPoint(new Vector3(0.5f, 0.3f, point.z));
             Vector3 destination = transform.position + delta;
             transform.position = Vector3.SmoothDamp(transform.position, destination, ref _velocity, 0.2F);
+            yield return new WaitForEndOfFrame();
         }
         else
         {
-            if(onFailure != null)
+            if (onFail != null)
             {
-                onFailure("MoveToTarget:  No Target");
+                onFail("MoveToTarget:  No Target");
             }
         }
+        yield return new WaitForEndOfFrame();
     }
 
 
