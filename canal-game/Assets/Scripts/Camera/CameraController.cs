@@ -8,38 +8,89 @@ public class CameraController : MonoBehaviour
 
     #region Properties
 
-    Coroutine _move;
+    #region Movement
+    [Header("Movement")]
+    [SerializeField][MinMaxRange(0,20)]
+    MinMax _distance;
 
+    [SerializeField]
+    float _maxSpeed;
+    #endregion
+
+    #region References
+    Coroutine _move;
     Camera _camera;
+    #endregion
+
+    #region Gizmos
+    [Header("Gizmos")]
+    [SerializeField][ReadOnly]
+    Transform _gizmo_target;
+
+    [SerializeField]
+    float _minSize;
+
+    [SerializeField]
+    float _ScreenEdgeBuffer;
 
     [SerializeField]
     float _dampTime;
-
-    [SerializeField]
-    Vector3 _velocity;
-
-    #region Gizmos
-    [SerializeField][ReadOnly]
-    Transform _gizmo_target;
     #endregion
-
 
     #endregion
 
     void Awake()
     {
         _camera = GetCamera(OnError);
+        _gizmo_target = FindTarget();
     }
 
-    Camera GetCamera(Action<string> onFail)
+    void FixedUpdate()
     {
+        if (_gizmo_target != null)
+        {
+            if (Vector3.Distance(transform.position, _gizmo_target.transform.position) > _distance.maxValue)
+            {
+                Zoom(_gizmo_target);
+                MoveToTarget(_gizmo_target, OnError);
+            }
+        }
+    }
+
+    Camera GetCamera(Action<string> onFail, int numberOfTries=0)
+    {
+        int maxTries = 5;
         if(this.GetComponent<Camera>() != null)
         {
             return this.GetComponent<Camera>();
         }
         if(onFail != null)
         {
-            onFail("No Camera found on this game object");
+            onFail("No Camera found on this game object - Adding now and retrying");
+            this.gameObject.AddComponent<Camera>();
+
+            if(numberOfTries < maxTries)
+            {
+                GetCamera(onFail, numberOfTries++);
+            }
+            else
+            {
+                onFail("Coud not add camera, number of tries exceded: " + maxTries);
+            }
+           
+        }
+        return null;
+    }
+
+    //TEMP: obviously temporary, find target
+    //will most likely be triggered by an event that sends the target
+    //information and it'll just use that instead of .Find
+    //.Find is in just for testing purposes (calm down)
+    Transform FindTarget()
+    {
+        if (GameObject.Find("Target") != null)
+        {
+            return  GameObject.Find("Target").transform;
         }
         return null;
     }
@@ -50,18 +101,20 @@ public class CameraController : MonoBehaviour
         {
             StopCoroutine(_move);
         }
-        _move = StartCoroutine(Move(target,onFail));
+        _move = StartCoroutine(Move(target, _distance.minValue, _maxSpeed, onFail));
     }
 
-    IEnumerator Move(Transform target, Action<string> onFail)
+    IEnumerator Move(Transform target, float minDistance, float speed, Action<string> onFail)
     {
         if (target)
         {
-            Vector3 point = _camera.WorldToViewportPoint(target.position);
-            Vector3 delta = target.position - _camera.ViewportToWorldPoint(new Vector3(0.5f, 0.3f, point.z));
-            Vector3 destination = transform.position + delta;
-            transform.position = Vector3.SmoothDamp(transform.position, destination, ref _velocity, 0.2F);
-            yield return new WaitForEndOfFrame();
+            Vector3 point = CalculatePoint(target);
+            Vector3 destination = CalculateDestination(target);
+            while (Vector3.Distance(transform.position, destination) > minDistance)
+            {
+                transform.position = Vector3.Lerp(transform.position, destination, speed);
+                yield return new WaitForEndOfFrame();
+            }
         }
         else
         {
@@ -74,7 +127,52 @@ public class CameraController : MonoBehaviour
     }
 
 
+    void Zoom(Transform target)
+    {
+        // Find the required size based on the desired position and smoothly transition to that size.
+        float requiredSize = FindRequiredSize(target);
+        GetCamera(OnError).orthographicSize = Mathf.Lerp(GetCamera(OnError).orthographicSize, requiredSize, _dampTime);
+    }
+
+
+    float FindRequiredSize(Transform target)
+    {
+        Vector3 desiredLocalPos = transform.InverseTransformPoint(CalculateDestination(target));
+
+        float size = 0f;
+
+        Vector3 targetLocalPos = transform.InverseTransformPoint(target.position);
+
+        Vector3 desiredPosToTarget = targetLocalPos - desiredLocalPos;
+
+        size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.y));
+
+        size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.x) / GetCamera(OnError).aspect);
+
+        size += _ScreenEdgeBuffer;
+
+        size = Mathf.Max(size, _minSize);
+
+        return size;
+    }
+
+
     #region Utility
+
+    Vector3 CalculatePoint(Transform target)
+    {
+        return GetCamera(OnError).WorldToViewportPoint(target.position);
+    }
+
+    Vector3 CalculateDelta(Transform target)
+    {
+        return target.position - GetCamera(OnError).ViewportToWorldPoint(new Vector3(0.5f, 0.5f, CalculatePoint(target).z));
+    }
+
+    Vector3 CalculateDestination(Transform target)
+    {
+        return transform.position + CalculateDelta(target);
+    }
 
     //TODO: implement
     List<Vector2> GetLines()
@@ -131,18 +229,16 @@ public class CameraController : MonoBehaviour
     }
     #endregion
 
+
     #region Test
 
     [ContextMenu("Test - Move To Target")]
     void TestMoveToTarget()
     {
-        if (GameObject.Find("Target") != null)
+        Transform target = FindTarget();
+        if (target != null)
         {
-            Transform target = GameObject.Find("Target").transform;
-            if (target != null)
-            {
-                MoveToTarget(target, OnError);
-            }
+            MoveToTarget(target, OnError);
         }
     }
 
