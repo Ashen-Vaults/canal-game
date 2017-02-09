@@ -6,6 +6,7 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
 
+
     #region Properties
 
     #region Movement
@@ -51,7 +52,7 @@ public class CameraController : MonoBehaviour
         {
             if (Vector3.Distance(transform.position, _gizmo_target.transform.position) > _distance.maxValue)
             {
-                Zoom(_gizmo_target);
+                Zoom(FindTargets(OnError));
                 MoveToTarget(_gizmo_target, OnError);
             }
         }
@@ -95,6 +96,29 @@ public class CameraController : MonoBehaviour
         return null;
     }
 
+    Transform[] FindTargets(Action<string> onError)
+    {
+        Transform[] targets = null;
+        if (GameObject.FindObjectsOfType<CameraTarget>() != null)
+        {
+            CameraTarget[] camTargs = GameObject.FindObjectsOfType<CameraTarget>();
+            targets = new Transform[camTargs.Length];
+
+            for (int i = 0; i < targets.Length; i++)
+            {
+                targets[i] = camTargs[i].transform;
+            }
+        }
+        else
+        {
+            if(onError != null)
+            {
+                onError("No CameraTargets in the Scene");
+            }
+        }
+        return targets;
+    }
+
     void MoveToTarget(Transform target, Action<string> onFail)
     {
         if(_move != null)
@@ -127,27 +151,30 @@ public class CameraController : MonoBehaviour
     }
 
 
-    void Zoom(Transform target)
+    void Zoom(Transform[] targets)
     {
         // Find the required size based on the desired position and smoothly transition to that size.
-        float requiredSize = FindRequiredSize(target);
+        float requiredSize = FindRequiredSize(targets);
         GetCamera(OnError).orthographicSize = Mathf.Lerp(GetCamera(OnError).orthographicSize, requiredSize, _dampTime);
     }
 
 
-    float FindRequiredSize(Transform target)
+    float FindRequiredSize(Transform[] targets)
     {
-        Vector3 desiredLocalPos = transform.InverseTransformPoint(CalculateDestination(target));
+        Vector3 desiredLocalPos = transform.InverseTransformPoint(CalculateDestination(targets[0]));
 
         float size = 0f;
 
-        Vector3 targetLocalPos = transform.InverseTransformPoint(target.position);
+        for (int i = 0; i < targets.Length; i++)
+        {
+            Vector3 targetLocalPos = transform.InverseTransformPoint(targets[i].position);
 
-        Vector3 desiredPosToTarget = targetLocalPos - desiredLocalPos;
+            Vector3 desiredPosToTarget = targetLocalPos - desiredLocalPos;
 
-        size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.y));
+            size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.y));
 
-        size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.x) / GetCamera(OnError).aspect);
+            size = Mathf.Max(size, Mathf.Abs(desiredPosToTarget.x) / GetCamera(OnError).aspect);
+        }
 
         size += _ScreenEdgeBuffer;
 
