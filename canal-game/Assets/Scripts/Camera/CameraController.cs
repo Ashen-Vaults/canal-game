@@ -128,6 +128,15 @@ public class CameraController : MonoBehaviour
         _move = StartCoroutine(Move(target, _distance.minValue, _maxSpeed, onFail));
     }
 
+    IEnumerator Wait(float waitTime, Action callback)
+    {
+        yield return new WaitForSeconds(waitTime);
+        if(callback != null)
+        {
+            callback();
+        }
+    }
+
     IEnumerator Move(Transform target, float minDistance, float speed, Action<string> onFail)
     {
         if (target)
