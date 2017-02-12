@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class EventManager : Singleton<EventManager>
+public class EventManager : MonoSingleton<EventManager>
 {
 
     #region Properties

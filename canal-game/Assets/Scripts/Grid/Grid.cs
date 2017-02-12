@@ -11,41 +11,42 @@ public class Grid : MonoBehaviour
     #region Grid Options
     [Header("Grid Options")]
     [SerializeField]
-    public Vector2 _gridWorldSize;
+    Vector2 _gridWorldSize;
 
     [SerializeField]
-    private Grid _envGrid;
+    Grid _envGrid;
 
     [SerializeField]
-    private Grid _movementGrid;
+    Grid _movementGrid;
 
-    public Grid MovementGrid
+    Grid MovementGrid
     {
         get { return _movementGrid; }
     }
 
     [SerializeField]
-    private LayerMask _unwalkableMask;
+    LayerMask _unwalkableMask;
 
     [SerializeField]
-    private float _nodeRadius;
-    public float NodeRadius
+    float _nodeRadius;
+    float NodeRadius
     {
         get { return _nodeRadius; }
     }
 
     [SerializeField]
-    private bool _isMovementGrid;
+    bool _isMovementGrid;
 
-    public bool IsMovementGrid
+    bool IsMovementGrid
     {
         get { return _isMovementGrid; }
     }
 
-    public bool collisionSet = false;
+    bool collisionSet = false;
 
     [SerializeField]
-    private bool _allowDiagonalAdjacents;
+    bool _allowDiagonalAdjacents;
+
     #endregion
 
 
@@ -57,13 +58,13 @@ public class Grid : MonoBehaviour
     [ReadOnly]
     public int gridSizeY;
 
-    [ReadOnly]
-    public List<Node> myNodes;
+    [ReadOnly][SerializeField]
+    List<Node> myNodes;
 
     [ReadOnly]
-    public List<Node> _unwalkableNodes = new List<Node>();
+    List<Node> _unwalkableNodes = new List<Node>();
 
-    public List<Node> _wallNodes = new List<Node>();
+    List<Node> _wallNodes = new List<Node>();
 
     float _nodeDiameter;
 
@@ -73,7 +74,7 @@ public class Grid : MonoBehaviour
 
     List<Node> neighbours = new List<Node>();
 
-    private Node _target;
+    Node _target;
 
 
     #endregion
@@ -83,43 +84,24 @@ public class Grid : MonoBehaviour
     #region Debug Options
     [Header("Debug Options")]
     [SerializeField]
-    private bool _showGrid;
+    bool _showGrid;
 
     [SerializeField]
-    private bool _editGrid;
+    bool _editGrid;
 
     [SerializeField]
-    private bool _ReadOnlyColliders;
-
-    [Flags]
-    public enum GridDisplayOptions
-    {
-        NONE = 0,
-        ENV_WALKABLE = 1 << 0,
-        ENV_COLLISION = 1 << 1,
-        ENV_COLLISION_WALKABLE = ENV_WALKABLE | ENV_COLLISION,
-        ENV_WALLS = 1 << 2,
-        ENV_COLLISION_WALKABLE_WALLS = ENV_COLLISION_WALKABLE | ENV_WALLS,
-        MOVE_WALKABLE = 1 << 3,
-        MOVE_COLLISION = 1 << 4,
-        MOVE_COLLISION_WALKABLE = MOVE_WALKABLE | MOVE_COLLISION,
-        MOVE_WALLS = 1 << 5,
-        MOVE_COLLISION_WALKABLE_WALLS = MOVE_COLLISION_WALKABLE | MOVE_WALLS
-    }
-
-    public GridDisplayOptions gridDisplayOptions;
-
+    bool _ReadOnlyColliders;
 
     [SerializeField]
-    public bool _showLabels;
+    bool _showLabels;
 
     [SerializeField]
-    private bool _randomObstacles;
+    bool _randomObstacles;
 
     [SerializeField]
-    private bool _createOnInit;
+    bool _createOnInit;
 
-    public string areaInLevel;
+    string areaInLevel;
     #endregion
 
 
@@ -128,13 +110,13 @@ public class Grid : MonoBehaviour
     [Header("Debug Visuals")]
 
     [SerializeField]
-    private Color _walkableColor;
+    Color _walkableColor;
 
     [SerializeField]
-    private Color _unWalkableColor;
+    Color _unWalkableColor;
 
     [SerializeField]
-    private Color _targetColor;
+    Color _targetColor;
 
 
     #endregion
@@ -144,19 +126,19 @@ public class Grid : MonoBehaviour
     #region Debug Styles
     [Header("Debug Styles")]
     [SerializeField]
-    private GUIStyle _gridPosStyle;
+    GUIStyle _gridPosStyle;
 
     [SerializeField]
-    private GUIStyle _gStyle;
+    GUIStyle _gStyle;
 
     [SerializeField]
-    private GUIStyle _hStyle;
+    GUIStyle _hStyle;
 
     [SerializeField]
-    private GUIStyle _fStyle;
+    GUIStyle _fStyle;
 
     [SerializeField]
-    private GUIStyle _targetStyle;
+    GUIStyle _targetStyle;
     #endregion
 
     #endregion
@@ -169,13 +151,20 @@ public class Grid : MonoBehaviour
     {
         if (_createOnInit)
         {
-            this.CreateGrid();
+            this.CreateGrid(()=> { Debug.Log("Created Grid"); });
         }
 
         if (_randomObstacles)
         {
-            this.CreateRandomObstacles();
+            CreateObstacles();
         }
+
+        Subscribe();
+    }
+
+    void OnDestroy()
+    {
+        UnSubscribe();
     }
 
 
@@ -200,17 +189,134 @@ public class Grid : MonoBehaviour
 
         }
     }
+
+
+    Vector2 GetCenterOfGrid()
+    {
+        float x = Mathf.RoundToInt(gridSizeX / 2);
+        float y = Mathf.RoundToInt(gridSizeY / 2);
+        return new Vector2(x, y);
+    }
+
+    bool IsCenter(Vector2 pos)
+    {
+        Vector2 center = GetCenterOfGrid();
+        if (pos.x == center.x && pos.y == center.y)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    List<Node> GetNodesFromGameObject(GameObject obj)
+    {
+        List<Node> nodes = new List<Node>();
+
+        Node centerNode = GetNode(obj.transform.position);
+
+        nodes.Add(centerNode);
+
+        return nodes;
+    }
+
+    void SetNodesWalkable(List<GameObject> walkableObjects)
+    {
+        if (walkableObjects  != null)
+        {
+            for (int i = 0; i < walkableObjects.Count; i++)
+            {
+                Node n = GetNode(walkableObjects[i].transform.position);
+                SetNodeWalkable(n, true);
+
+
+
+
+
+
+                List<Node> nodes = GetAdjacents(n);
+                for (int j = 0; j < nodes.Count; j++)
+                {
+                    SetNodeWalkable(nodes[j], true);
+                }
+
+
+            }
+        }
+    }
+
+    [ContextMenu("Invert Nodes")]
+    void InvertNodeStates()
+    {
+        for (int i = 0; i < myNodes.Count; i++)
+        {
+            if (myNodes[i].Walkable)
+            {
+                myNodes[i].Walkable = false;
+            }
+            else
+            {
+                myNodes[i].Walkable = true;
+            }
+        }
+    }
     #endregion
 
 
+    #region IObserver
+
+    void Subscribe()
+    {
+        EventManager.instance.AddListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
+        EventManager.instance.AddListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
+        EventManager.instance.AddListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
+    }
+
+    void UnSubscribe()
+    {
+        EventManager.instance.RemoveListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
+        EventManager.instance.RemoveListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
+        EventManager.instance.RemoveListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
+    }
+
+    #endregion
+
+    #region Events
+
+    void OnRequestCenterOfGrid(Events.RequestCenterOfGrid @event)
+    {
+        Vector2 center = GetCenterOfGrid();
+
+        Node node = null;
+        if (grid[(int)center.x, (int)center.y] != null)
+        {
+            node = grid[(int)center.x, (int)center.y];
+        }
+        if (@event._callback != null)
+        {
+            @event._callback(node.myWorldPosition);
+        }
+    }
 
 
+    void OnSetWalkablePointsInGrid(Events.SetWalkableInGrid @event)
+    {
+        SetNodesWalkable(@event._points);
+    }
+
+    void OnRequestCreateGrid(Events.RequestCreateGrid @event)
+    {
+        CreateGrid(@event._callback);
+    }
+
+    #endregion
+
+       
     #region Grid Creation    
     /// <summary>
     /// Creates the grid.
     /// </summary>
     [ContextMenu("Create Grid")]
-    public void CreateGrid()
+    void CreateGrid(Action callback)
     {
         _nodeDiameter = _nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / _nodeDiameter);
@@ -240,7 +346,8 @@ public class Grid : MonoBehaviour
                 if (x == 0 && y == 0)
                     Debug.Log("FirstNode " + worldPoint);
 
-                bool walkable = !(Physics2D.OverlapCircle(worldPoint, _nodeRadius, this._unwalkableMask));
+                bool walkable = (Physics2D.OverlapCircle(worldPoint, _nodeRadius, this._unwalkableMask));
+
                 bool isWall = false;
 
                 if (x == 0)
@@ -255,7 +362,7 @@ public class Grid : MonoBehaviour
 
                 bool isCenter = false;
 
-                if (x == Mathf.RoundToInt(gridSizeX / 2) && y == Mathf.RoundToInt(gridSizeY / 2))
+                if (IsCenter(worldPoint))
                     isCenter = true;
 
                 grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
@@ -272,53 +379,13 @@ public class Grid : MonoBehaviour
             }
         }
 
-        /*
-        grid = new Node[gridSizeX, gridSizeY];
-       _worldBottomLeft = transform.position - Vector3.right * _gridWorldSize.x / 2 - Vector3.up * _gridWorldSize.y / 2;
-
-       for (int x = 0; x < gridSizeX; x++)
-       {
-           for (int y = gridSizeY - 1; y >= 0; y--)
-           {
-               Vector3 worldPoint = _worldBottomLeft + Vector3.right * (x * _nodeDiameter + _nodeRadius) + Vector3.up * (y * _nodeDiameter + _nodeRadius / 2);
-               bool walkable = !(Physics.CheckSphere(worldPoint, _nodeRadius, _unwalkableMask));
-
-
-               bool isWall = false;
-
-               if (x == 0)
-                   isWall = true;
-               if (y == 0)
-                   isWall = true;
-
-               if (x == this.gridSizeX - 1)
-                   isWall = true;
-               if (y == this.gridSizeY - 1)
-                   isWall = true;
-
-               bool isCenter = false;
-
-               if (x == Mathf.RoundToInt(gridSizeX / 2) && y == Mathf.RoundToInt(gridSizeY / 2))
-                   isCenter = true;
-
-               grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
-               myNodes.Add(grid[x, y]);
-
-
-               if (isWall)
-                   _wallNodes.Add(grid[x, y]);
-
-               if (walkable == false)
-                   _unwalkableNodes.Add(grid[x, y]);
-           }
-       }
-       */
-        // StartCoroutine(CreateNodes());
-
-
         if (!this.IsMovementGrid && this._movementGrid != null)
-            this._movementGrid.CreateGrid();
+            this._movementGrid.CreateGrid(callback);
 
+        if (callback != null)
+        {
+            callback();
+        }
     }
 
     /// <summary>
@@ -332,7 +399,7 @@ public class Grid : MonoBehaviour
             for (int y = gridSizeY - 1; y >= 0; y--)
             {
                 Vector3 worldPoint = _worldBottomLeft + Vector3.right * (x * _nodeDiameter + _nodeRadius) + Vector3.up * (y * _nodeDiameter + _nodeRadius / 2);
-                bool walkable = !(Physics.CheckSphere(worldPoint, _nodeRadius, _unwalkableMask));
+                bool walkable = (Physics.CheckSphere(worldPoint, _nodeRadius, _unwalkableMask));
                 bool isWall = false;
 
                 if (x == 0)
@@ -358,9 +425,8 @@ public class Grid : MonoBehaviour
         }
     }
 
-
     [ContextMenu("Create Colliders")]
-    public void CreateColliders()
+    void CreateColliders()
     {
         if (_envGrid != null)
         {
@@ -389,16 +455,18 @@ public class Grid : MonoBehaviour
         collisionSet = true;
     }
 
-
-    public void SetNodeWalkable(Node node, bool state)
+    void SetNodeWalkable(Node node, bool state)
     {
-        node.Walkable = state;
-        if (state == false)
-            this._unwalkableNodes.Add(node);
-        else
+        if (node != null)
         {
-            if (this._unwalkableNodes.Contains(node))
-                this._unwalkableNodes.Remove(node);
+            node.Walkable = state;
+            if (state == false)
+                this._unwalkableNodes.Add(node);
+            else
+            {
+                if (this._unwalkableNodes.Contains(node))
+                    this._unwalkableNodes.Remove(node);
+            }
         }
     }
     #endregion
@@ -488,6 +556,7 @@ public class Grid : MonoBehaviour
         return closestNode;
     }
 
+
     #endregion
 
 
@@ -508,7 +577,7 @@ public class Grid : MonoBehaviour
                     if (n.Walkable)
                     {
                         Gizmos.color = _walkableColor;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter/2));
+                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
                         //(n.myWorldPosition + (Vector3.up), n.gridX + " - " + n.gridY, _gridPosStyle);
 
                         if (_showLabels)
@@ -522,14 +591,14 @@ public class Grid : MonoBehaviour
                     else
                     {
                         Gizmos.color = _unWalkableColor;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter/2));
+                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
                     }
 
 
                     if (n.onWall)
                     {
                         Gizmos.color = Color.magenta;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter/2));
+                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
                     }
                 }
                 else
@@ -537,7 +606,7 @@ public class Grid : MonoBehaviour
                     if (!n.Walkable)
                     {
                         Gizmos.color = _unWalkableColor;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter/2));
+                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
                     }
 
                     if (_showLabels && n.centerNode)
@@ -566,8 +635,30 @@ public class Grid : MonoBehaviour
     }
 #endif
 
-    [ContextMenu("Create Random Obstacles")]
-    private void CreateRandomObstacles()
+
+
+    [ContextMenu("Show Node Gizmo Size")]
+    void ShowNodeGizmoSize()
+    {
+        Debug.Log(this + "  " + Vector3.one * _nodeDiameter / 2);
+    }
+
+
+
+    #endregion
+
+
+    #region Obstacle Placement
+
+    void CreateRandomObstacles(Action createObstacle)
+    {
+        if (createObstacle != null)
+        {
+            createObstacle();
+        }
+    }
+
+    void ObstaclesRandom()
     {
         System.Random rand = new System.Random();
         for (int i = 0; i < this.myNodes.Count; i++)
@@ -579,35 +670,12 @@ public class Grid : MonoBehaviour
         }
     }
 
-    [ContextMenu("Show Node Gizmo Size")]
-    private void ShowNodeGizmoSize()
+    [ContextMenu("Create Random Obstacles")]
+    void CreateObstacles()
     {
-        Debug.Log(this + "  " + Vector3.one * _nodeDiameter/2);
-    }
-
-
-    public static GridDisplayOptions SetFlag(GridDisplayOptions a, GridDisplayOptions b)
-    {
-        return a | b;
-    }
-
-    public static GridDisplayOptions UnsetFlag(GridDisplayOptions a, GridDisplayOptions b)
-    {
-        return a & (~b);
-    }
-
-    // Works with "None" as well
-    public static bool HasFlag(GridDisplayOptions a, GridDisplayOptions b)
-    {
-        return (a & b) == b;
-    }
-
-    public static GridDisplayOptions ToogleFlag(GridDisplayOptions a, GridDisplayOptions b)
-    {
-        return a ^ b;
+        CreateRandomObstacles(ObstaclesRandom);
     }
 
     #endregion
-
 
 }

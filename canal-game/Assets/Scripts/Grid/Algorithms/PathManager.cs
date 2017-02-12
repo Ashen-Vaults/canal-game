@@ -5,9 +5,6 @@ using System.Collections.Generic;
 
 namespace PathFinder
 {
-     /// <summary>
-     /// Enemies will get a path from this
-     /// </summary>
     public class PathManager : MonoBehaviour
     {
         Queue<PathRequest> PathQueue = new Queue<PathRequest>();
@@ -25,10 +22,10 @@ namespace PathFinder
 
         void Subscribe()
         {
-            EventManager.instance.AddListener<Events.RequestToMoveToNodeEvent>(OnRequestToMoveToNode);
+            EventManager.instance.AddListener<Events.RequestToMoveToNode>(OnRequestToMoveToNode);
         }
 
-        void OnRequestToMoveToNode(Events.RequestToMoveToNodeEvent @event)
+        void OnRequestToMoveToNode(Events.RequestToMoveToNode @event)
         {
             if(this.myAlgorithm.myProperties.myGraph.grid != null)
                 RequestPath(@event._currentPos, @event._requestedPos, @event._heuristic, @event._simplifyPath, @event._callback);

@@ -8,7 +8,7 @@ public partial class Events
 {
 
 
-    public struct RequestToMoveToNodeEvent : IGameEvent
+    public struct RequestToMoveToNode : IGameEvent
     {
         public readonly Vector3 _currentPos;
         public readonly Vector3 _requestedPos;
@@ -16,7 +16,7 @@ public partial class Events
         public readonly bool _simplifyPath;
         public readonly Action<Vector3[], bool> _callback;
 
-        public RequestToMoveToNodeEvent(Vector3 currentPos, Vector3 requestedPos, DistanceHeuristic heurstic, bool simplify, Action<Vector3[], bool> callback)
+        public RequestToMoveToNode(Vector3 currentPos, Vector3 requestedPos, DistanceHeuristic heurstic, bool simplify, Action<Vector3[], bool> callback)
         {
             _currentPos = currentPos;
             _requestedPos = requestedPos;
@@ -26,6 +26,33 @@ public partial class Events
         }
     }
 
+    public struct SetWalkableInGrid : IGameEvent
+    {
+        public readonly List<GameObject> _points;
+        public SetWalkableInGrid(List<GameObject> points)
+        {
+            _points = points;
+        }
+    }
 
+
+    public struct RequestCenterOfGrid : IGameEvent
+    {
+        public readonly Action<Vector2> _callback;
+        public RequestCenterOfGrid(Action<Vector2> callback)
+        {
+            _callback = callback;
+        }
+    }
+
+    public struct RequestCreateGrid : IGameEvent
+    {
+        public readonly Action _callback;
+        public RequestCreateGrid(Action callback)
+        {
+            _callback = callback;
+        }
+    }
 }
-                      
+
+

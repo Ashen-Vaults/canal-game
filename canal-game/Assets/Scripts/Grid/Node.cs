@@ -23,21 +23,14 @@ namespace PathFinder
             set
             {
                 _walkable = value;
-                /*
-                if(value == false)
-                {
-                    this.gScore = 10000000;
-                    this.hScore = 10000000;
-                }
-                */
             }
         }
-        //public Vector2 myPosition2D;
+
         public Vector3 myWorldPosition;
 
         public Transform myParentTransform;
 
-        //public Vector3 MyDisplayPosition;
+
   
 
         public Vector3 mySize;
