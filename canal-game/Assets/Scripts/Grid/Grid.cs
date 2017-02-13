@@ -101,7 +101,8 @@ public class Grid : MonoBehaviour
     [SerializeField]
     bool _createOnInit;
 
-    string areaInLevel;
+    [SerializeField][Range(0,1)]
+    float _timeBetweenNodeCreation;
     #endregion
 
 
@@ -151,7 +152,9 @@ public class Grid : MonoBehaviour
     {
         if (_createOnInit)
         {
-            this.CreateGrid(()=> { Debug.Log("Created Grid"); });
+            //this.CreateGrid(()=> { Debug.Log("Created Grid"); });
+
+            StartCoroutine(CreateNodes(_timeBetweenNodeCreation));
         }
 
         if (_randomObstacles)
@@ -392,35 +395,70 @@ public class Grid : MonoBehaviour
     /// Creates the nodes.
     /// </summary>
     /// <returns></returns>
-    IEnumerator CreateNodes()
+    IEnumerator CreateNodes(float waitTime)
     {
+        _nodeDiameter = _nodeRadius * 2;
+        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / _nodeDiameter);
+        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / _nodeDiameter);
+
+        //Debug.Log("gridSizeX/Y: " + gridSizeX + "," + gridSizeY);
+
+
+        myNodes.Clear();
+
+
+
+        grid = new Node[gridSizeX, gridSizeY];
+        Vector3 bottomLeftCorner = transform.position;
+
+        //Debug.Log("bottomLeftCorner " + bottomLeftCorner);
+
+
         for (int x = 0; x < gridSizeX; x++)
         {
-            for (int y = gridSizeY - 1; y >= 0; y--)
+            for (int y = 0; y < gridSizeY; y++)
             {
-                Vector3 worldPoint = _worldBottomLeft + Vector3.right * (x * _nodeDiameter + _nodeRadius) + Vector3.up * (y * _nodeDiameter + _nodeRadius / 2);
-                bool walkable = (Physics.CheckSphere(worldPoint, _nodeRadius, _unwalkableMask));
+                Vector3 worldPoint = Vector3.zero;
+
+                //worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius + NodeRadius) + Vector3.up * (y * NodeRadius + gridSizeY);
+                worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius) + Vector3.up * (y * NodeRadius);
+                if (x == 0 && y == 0)
+                    Debug.Log("FirstNode " + worldPoint);
+
+                bool walkable = (Physics2D.OverlapCircle(worldPoint, _nodeRadius, this._unwalkableMask));
+
                 bool isWall = false;
 
                 if (x == 0)
                     isWall = true;
                 if (y == 0)
                     isWall = true;
-                if (x == this.gridSizeX)
+
+                if (x == this.gridSizeX - 1)
                     isWall = true;
-                if (y == this.gridSizeY)
+                if (y == this.gridSizeY - 1)
                     isWall = true;
 
                 bool isCenter = false;
 
-                if (x == Mathf.RoundToInt(gridSizeX / 2) && y == Mathf.RoundToInt(gridSizeY / 2))
+                if (IsCenter(worldPoint))
                     isCenter = true;
 
                 grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
                 if (grid[x, y].Walkable != true)
                     grid[x, y].occupierCount += 1;
                 myNodes.Add(grid[x, y]);
-                yield return new WaitForSeconds(0);
+
+
+                if (isWall)
+                    _wallNodes.Add(grid[x, y]);
+
+                if (walkable == false)
+                {
+                    _unwalkableNodes.Add(grid[x, y]);
+                }
+
+                yield return new WaitForSeconds(waitTime);
             }
         }
     }
@@ -611,7 +649,7 @@ public class Grid : MonoBehaviour
 
                     if (_showLabels && n.centerNode)
                     {
-                        UnityEditor.Handles.Label(n.myWorldPosition, this.areaInLevel);
+                        UnityEditor.Handles.Label(n.myWorldPosition, n.gridX.ToString() + " -  " + n.gridY.ToString());
                     }
                 }
 
