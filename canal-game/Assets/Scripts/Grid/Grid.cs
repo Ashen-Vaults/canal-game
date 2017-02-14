@@ -19,28 +19,14 @@ public class Grid : MonoBehaviour
     [SerializeField]
     Grid _movementGrid;
 
-    Grid MovementGrid
-    {
-        get { return _movementGrid; }
-    }
-
     [SerializeField]
     LayerMask _unwalkableMask;
 
     [SerializeField]
     float _nodeRadius;
-    float NodeRadius
-    {
-        get { return _nodeRadius; }
-    }
 
     [SerializeField]
     bool _isMovementGrid;
-
-    bool IsMovementGrid
-    {
-        get { return _isMovementGrid; }
-    }
 
     bool collisionSet = false;
 
@@ -52,27 +38,26 @@ public class Grid : MonoBehaviour
 
 
     #region Misc
-    [Header("Debug Info")]
-    [ReadOnly]
+    [Header("Debug Info")][ReadOnly][SerializeField]
     public int gridSizeX;
-    [ReadOnly]
-    public int gridSizeY;
 
     [ReadOnly][SerializeField]
-    List<Node> myNodes;
+     public int gridSizeY;
 
-    [ReadOnly]
+    [ReadOnly][SerializeField]
+    List<Node> _myNodes;
+
+    [ReadOnly][SerializeField]
     List<Node> _unwalkableNodes = new List<Node>();
 
+    [ReadOnly][SerializeField]
     List<Node> _wallNodes = new List<Node>();
 
-    float _nodeDiameter;
-
-    public Node[,] grid;
+    Node[,] _grid;
 
     Vector3 _worldBottomLeft;
 
-    List<Node> neighbours = new List<Node>();
+    List<Node> _neighbours = new List<Node>();
 
     Node _target;
 
@@ -165,11 +150,10 @@ public class Grid : MonoBehaviour
         Subscribe();
     }
 
-    void OnDestroy()
+    private void OnDisable()
     {
-        UnSubscribe();
+     //   UnSubscribe();
     }
-
 
     void Update()
     {
@@ -250,15 +234,15 @@ public class Grid : MonoBehaviour
     [ContextMenu("Invert Nodes")]
     void InvertNodeStates()
     {
-        for (int i = 0; i < myNodes.Count; i++)
+        for (int i = 0; i < _myNodes.Count; i++)
         {
-            if (myNodes[i].Walkable)
+            if (_myNodes[i].Walkable)
             {
-                myNodes[i].Walkable = false;
+                _myNodes[i].Walkable = false;
             }
             else
             {
-                myNodes[i].Walkable = true;
+                _myNodes[i].Walkable = true;
             }
         }
     }
@@ -290,9 +274,9 @@ public class Grid : MonoBehaviour
         Vector2 center = GetCenterOfGrid();
 
         Node node = null;
-        if (grid[(int)center.x, (int)center.y] != null)
+        if (_grid[(int)center.x, (int)center.y] != null)
         {
-            node = grid[(int)center.x, (int)center.y];
+            node = _grid[(int)center.x, (int)center.y];
         }
         if (@event._callback != null)
         {
@@ -313,7 +297,13 @@ public class Grid : MonoBehaviour
 
     #endregion
 
-       
+    float GetNodeDiameter(float radius)
+    {
+        return radius * 2;
+    }
+
+
+
     #region Grid Creation    
     /// <summary>
     /// Creates the grid.
@@ -321,18 +311,17 @@ public class Grid : MonoBehaviour
     [ContextMenu("Create Grid")]
     void CreateGrid(Action callback)
     {
-        _nodeDiameter = _nodeRadius * 2;
-        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / _nodeDiameter);
-        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / _nodeDiameter);
+        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / GetNodeDiameter(_nodeRadius));
+        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / GetNodeDiameter(_nodeRadius));
 
         //Debug.Log("gridSizeX/Y: " + gridSizeX + "," + gridSizeY);
 
 
-        myNodes.Clear();
+        _myNodes.Clear();
 
 
 
-        grid = new Node[gridSizeX, gridSizeY];
+        _grid = new Node[gridSizeX, gridSizeY];
         Vector3 bottomLeftCorner = transform.position;
 
         //Debug.Log("bottomLeftCorner " + bottomLeftCorner);
@@ -345,7 +334,7 @@ public class Grid : MonoBehaviour
                 Vector3 worldPoint = Vector3.zero;
 
                 //worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius + NodeRadius) + Vector3.up * (y * NodeRadius + gridSizeY);
-                worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius) + Vector3.up * (y * NodeRadius);
+                worldPoint = bottomLeftCorner + Vector3.right * (x * _nodeRadius) + Vector3.up * (y * _nodeRadius);
                 if (x == 0 && y == 0)
                     Debug.Log("FirstNode " + worldPoint);
 
@@ -368,21 +357,21 @@ public class Grid : MonoBehaviour
                 if (IsCenter(worldPoint))
                     isCenter = true;
 
-                grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
-                if (grid[x, y].Walkable != true)
-                    grid[x, y].occupierCount += 1;
-                myNodes.Add(grid[x, y]);
+                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
+                if (_grid[x, y].Walkable != true)
+                    _grid[x, y].occupierCount += 1;
+                _myNodes.Add(_grid[x, y]);
 
 
                 if (isWall)
-                    _wallNodes.Add(grid[x, y]);
+                    _wallNodes.Add(_grid[x, y]);
 
                 if (walkable == false)
-                    _unwalkableNodes.Add(grid[x, y]);
+                    _unwalkableNodes.Add(_grid[x, y]);
             }
         }
 
-        if (!this.IsMovementGrid && this._movementGrid != null)
+        if (!this._isMovementGrid && this._movementGrid != null)
             this._movementGrid.CreateGrid(callback);
 
         if (callback != null)
@@ -397,18 +386,17 @@ public class Grid : MonoBehaviour
     /// <returns></returns>
     IEnumerator CreateNodes(float waitTime)
     {
-        _nodeDiameter = _nodeRadius * 2;
-        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / _nodeDiameter);
-        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / _nodeDiameter);
+        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / GetNodeDiameter(_nodeRadius));
+        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / GetNodeDiameter(_nodeRadius));
 
         //Debug.Log("gridSizeX/Y: " + gridSizeX + "," + gridSizeY);
 
 
-        myNodes.Clear();
+        _myNodes.Clear();
 
 
 
-        grid = new Node[gridSizeX, gridSizeY];
+        _grid = new Node[gridSizeX, gridSizeY];
         Vector3 bottomLeftCorner = transform.position;
 
         //Debug.Log("bottomLeftCorner " + bottomLeftCorner);
@@ -421,7 +409,7 @@ public class Grid : MonoBehaviour
                 Vector3 worldPoint = Vector3.zero;
 
                 //worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius + NodeRadius) + Vector3.up * (y * NodeRadius + gridSizeY);
-                worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius) + Vector3.up * (y * NodeRadius);
+                worldPoint = bottomLeftCorner + Vector3.right * (x * _nodeRadius) + Vector3.up * (y * _nodeRadius);
                 if (x == 0 && y == 0)
                     Debug.Log("FirstNode " + worldPoint);
 
@@ -444,18 +432,18 @@ public class Grid : MonoBehaviour
                 if (IsCenter(worldPoint))
                     isCenter = true;
 
-                grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
-                if (grid[x, y].Walkable != true)
-                    grid[x, y].occupierCount += 1;
-                myNodes.Add(grid[x, y]);
+                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
+                if (_grid[x, y].Walkable != true)
+                    _grid[x, y].occupierCount += 1;
+                _myNodes.Add(_grid[x, y]);
 
 
                 if (isWall)
-                    _wallNodes.Add(grid[x, y]);
+                    _wallNodes.Add(_grid[x, y]);
 
                 if (walkable == false)
                 {
-                    _unwalkableNodes.Add(grid[x, y]);
+                    _unwalkableNodes.Add(_grid[x, y]);
                 }
 
                 yield return new WaitForSeconds(waitTime);
@@ -521,7 +509,7 @@ public class Grid : MonoBehaviour
     /// <returns></returns>
     public List<Node> GetAdjacents(Node node)
     {
-        neighbours.Clear();
+        _neighbours.Clear();
 
         if (_allowDiagonalAdjacents)
         {
@@ -537,7 +525,7 @@ public class Grid : MonoBehaviour
 
                     if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                     {
-                        neighbours.Add(grid[checkX, checkY]);
+                        _neighbours.Add(_grid[checkX, checkY]);
                     }
                 }
             }
@@ -546,26 +534,26 @@ public class Grid : MonoBehaviour
         {
             if (node.gridX - 1 >= 0 && node.gridX - 1 < gridSizeX)
             {
-                neighbours.Add(grid[node.gridX - 1, node.gridY]);
+                _neighbours.Add(_grid[node.gridX - 1, node.gridY]);
             }
 
             if (node.gridX + 1 >= 0 && node.gridX + 1 < gridSizeX)
             {
-                neighbours.Add(grid[node.gridX + 1, node.gridY]);
+                _neighbours.Add(_grid[node.gridX + 1, node.gridY]);
             }
 
             if (node.gridY - 1 >= 0 && node.gridY - 1 < gridSizeY)
             {
-                neighbours.Add(grid[node.gridX, node.gridY - 1]);
+                _neighbours.Add(_grid[node.gridX, node.gridY - 1]);
             }
 
             if (node.gridY + 1 >= 0 && node.gridY + 1 < gridSizeY)
             {
-                neighbours.Add(grid[node.gridX, node.gridY + 1]);
+                _neighbours.Add(_grid[node.gridX, node.gridY + 1]);
             }
         }
 
-        return neighbours;
+        return _neighbours;
     }
 
     /// <summary>
@@ -582,11 +570,11 @@ public class Grid : MonoBehaviour
         {
             for (int j = 0; j < gridSizeY; j++)
             {
-                float sqrDist = (grid[i, j].myWorldPosition - worldPosition).sqrMagnitude;
+                float sqrDist = (_grid[i, j].myWorldPosition - worldPosition).sqrMagnitude;
                 if (sqrDist < minDist)
                 {
                     minDist = sqrDist;
-                    closestNode = grid[i, j];
+                    closestNode = _grid[i, j];
                 }
             }
         }
@@ -605,17 +593,17 @@ public class Grid : MonoBehaviour
     void OnDrawGizmos()
     {
         //   Gizmos.DrawWireCube(transform.position, new Vector3(_gridWorldSize.x, _gridWorldSize.y,1));
-        if (grid != null && _showGrid)
+        if (_grid != null && _showGrid)
         {
 
-            foreach (Node n in this.myNodes)
+            foreach (Node n in this._myNodes)
             {
                 if (!_ReadOnlyColliders)
                 {
                     if (n.Walkable)
                     {
                         Gizmos.color = _walkableColor;
-                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
+                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (GetNodeDiameter(_nodeRadius) / 2));
                         //(n.myWorldPosition + (Vector3.up), n.gridX + " - " + n.gridY, _gridPosStyle);
 
                         if (_showLabels)
@@ -629,14 +617,14 @@ public class Grid : MonoBehaviour
                     else
                     {
                         Gizmos.color = _unWalkableColor;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
+                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (GetNodeDiameter(_nodeRadius) / 2));
                     }
 
 
                     if (n.onWall)
                     {
                         Gizmos.color = Color.magenta;
-                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
+                        Gizmos.DrawCube(n.myWorldPosition, Vector3.one * (GetNodeDiameter(_nodeRadius) / 2));
                     }
                 }
                 else
@@ -644,7 +632,7 @@ public class Grid : MonoBehaviour
                     if (!n.Walkable)
                     {
                         Gizmos.color = _unWalkableColor;
-                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (_nodeDiameter / 2));
+                        Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (GetNodeDiameter(_nodeRadius) / 2));
                     }
 
                     if (_showLabels && n.centerNode)
@@ -678,7 +666,7 @@ public class Grid : MonoBehaviour
     [ContextMenu("Show Node Gizmo Size")]
     void ShowNodeGizmoSize()
     {
-        Debug.Log(this + "  " + Vector3.one * _nodeDiameter / 2);
+        Debug.Log(this + "  " + Vector3.one * GetNodeDiameter(_nodeRadius) / 2);
     }
 
 
@@ -699,11 +687,11 @@ public class Grid : MonoBehaviour
     void ObstaclesRandom()
     {
         System.Random rand = new System.Random();
-        for (int i = 0; i < this.myNodes.Count; i++)
+        for (int i = 0; i < this._myNodes.Count; i++)
         {
             if (rand.Next() % 3 == 0)
             {
-                this.myNodes[i].Walkable = false;
+                this._myNodes[i].Walkable = false;
             }
         }
     }

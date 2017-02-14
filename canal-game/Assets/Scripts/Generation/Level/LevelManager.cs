@@ -104,7 +104,7 @@ public class LevelManager : MonoBehaviour
         _points.AddRange(CreateRandomPointsInCircle(_rooms,_radius.maxValue));
         _tiles = CreateGameObjectsAtPoint();
 
-        StartCoroutine(Wait(2.5f, ()=> { EventManager.instance.QueueEvent(new Events.RequestCreateGrid()); }));
+        StartCoroutine(Wait(2.5f, ()=> { EventManager.instance.QueueEvent(new Events.RequestCreateGrid(OnCreatedGrid)); }));
       // EventManager.instance.QueueEvent(new Events.SetWalkableInGrid( ));
     }
 
@@ -153,4 +153,5 @@ public struct Room
         _position = position;
         _size = size;
     }
+
 }

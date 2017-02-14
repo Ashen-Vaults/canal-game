@@ -88,6 +88,16 @@ public class EventManager : MonoSingleton<EventManager>
 
     #region Implementation
 
+    void CleanUp()
+    {
+        RemoveAll();
+        _eventQueue.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
+    }
 
     #region Adding
     /// <summary>
@@ -405,8 +415,7 @@ public class EventManager : MonoSingleton<EventManager>
     /// </summary>
     public void OnApplicationQuit()
     {
-        RemoveAll();
-        _eventQueue.Clear();
+        CleanUp();
     }
     #endregion
 

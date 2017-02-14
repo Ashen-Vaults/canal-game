@@ -27,8 +27,7 @@ namespace PathFinder
 
         void OnRequestToMoveToNode(Events.RequestToMoveToNode @event)
         {
-            if(this.myAlgorithm.myProperties.myGraph.grid != null)
-                RequestPath(@event._currentPos, @event._requestedPos, @event._heuristic, @event._simplifyPath, @event._callback);
+            RequestPath(@event._currentPos, @event._requestedPos, @event._heuristic, @event._simplifyPath, @event._callback);
         }
 
         public void RequestPath(Vector3 _start, Vector3 _end, DistanceHeuristic _distanceType, bool _simplifiedPath, Action<Vector3[], bool> callback)
