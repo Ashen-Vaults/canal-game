@@ -53,16 +53,18 @@ public class LevelManager : MonoBehaviour
     {
         UnityEngine.Random.InitState(GetSeed());
 
-        CreateLevel(CreatePointInSpiral, _radius, _rooms, _seed);
+        //CreateLevel(CreatePointInSpiral, _radius, _rooms, _seed, CreateNormalSize);
+
+        CreateLevel(CreateRandomPointsInCircle, _radius, _rooms, _seed, CreateRandomSize);
     }
-    
-    void CreateLevel(Func<float,int, List<Point>> createPoints, float radius, int numberOfRooms, string seed)
+
+    void CreateLevel(Func<float,int, List<Point>> createPoints, float radius, int numberOfRooms, string seed, Func<System.Random, Vector2> onSetLocalScale)
     {
         if(createPoints != null)
         {
             _points = createPoints(radius, numberOfRooms);
 
-            _tiles = CreateGameObjectsAtPoint(_points, GetSeed(), CreateNormalSize);
+            _tiles = CreateGameObjectsAtPoint(_points, GetSeed(), onSetLocalScale);
         }
 
         StartCoroutine(Wait(GetTimeForRoomSteering(radius, numberOfRooms), () =>

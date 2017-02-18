@@ -706,6 +706,17 @@ public class Grid : MonoBehaviour
         CreateRandomObstacles(ObstaclesRandom);
     }
 
+    [ContextMenu("Create GameObjects For Unwalkables")]
+    void CreateGameObjectsAtWalkables()
+    {
+        for (int i = 0; i < this._unwalkableNodes.Count; i++)
+        {
+            GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obj.transform.position = this._unwalkableNodes[i].myWorldPosition;
+            obj.transform.parent = this.transform;
+        }
+    }
+
     #endregion
 
 }
