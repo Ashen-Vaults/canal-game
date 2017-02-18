@@ -118,11 +118,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5dcd26a7342bb9346a750c337a5afe65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _rooms: 20
-  _radius:
-    minValue: 1
-    maxValue: 7.519203
-  _circleColor: {r: 1, g: 0, b: 0, a: 1}
+  _seed: test
+  _rooms: 250
+  _radius: 10
+  _circleColor: {r: 1, g: 0, b: 0, a: 0}
   _points: []
   _prefab: {fileID: 1326207431156794, guid: eaea1e3d858652949967b757210d3e0b, type: 2}
   _tileSize:
@@ -191,7 +190,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.575638, g: 0.8602941, b: 0.6011588, a: 0}
+  m_BackGroundColor: {r: 0.25, g: 0.25, b: 0.25, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -267,13 +266,16 @@ MonoBehaviour:
   _allowDiagonalAdjacents: 0
   gridSizeX: 0
   gridSizeY: 0
-  myNodes: []
+  _myNodes: []
+  _unwalkableNodes: []
+  _wallNodes: []
   _showGrid: 1
-  _editGrid: 0
+  _editGrid: 1
   _ReadOnlyColliders: 0
   _showLabels: 0
   _randomObstacles: 0
   _createOnInit: 0
+  _timeBetweenNodeCreation: 0
   _walkableColor: {r: 0.11724138, g: 0, b: 1, a: 1}
   _unWalkableColor: {r: 1, g: 0, b: 0, a: 1}
   _targetColor: {r: 0, g: 1, b: 0.4620688, a: 1}

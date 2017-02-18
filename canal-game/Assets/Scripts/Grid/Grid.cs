@@ -33,9 +33,8 @@ public class Grid : MonoBehaviour
     [SerializeField]
     bool _allowDiagonalAdjacents;
 
+
     #endregion
-
-
 
     #region Misc
     [Header("Debug Info")][ReadOnly][SerializeField]
@@ -64,8 +63,6 @@ public class Grid : MonoBehaviour
 
     #endregion
 
-
-
     #region Debug Options
     [Header("Debug Options")]
     [SerializeField]
@@ -90,8 +87,6 @@ public class Grid : MonoBehaviour
     float _timeBetweenNodeCreation;
     #endregion
 
-
-
     #region Debug Visuals
     [Header("Debug Visuals")]
 
@@ -106,8 +101,6 @@ public class Grid : MonoBehaviour
 
 
     #endregion
-
-
 
     #region Debug Styles
     [Header("Debug Styles")]
@@ -130,15 +123,12 @@ public class Grid : MonoBehaviour
     #endregion
 
 
-
-
     #region Unity Implementation
     void Awake()
     {
         if (_createOnInit)
         {
             //this.CreateGrid(()=> { Debug.Log("Created Grid"); });
-
             StartCoroutine(CreateNodes(_timeBetweenNodeCreation));
         }
 
@@ -160,23 +150,31 @@ public class Grid : MonoBehaviour
         if (_showGrid && _editGrid)
         {
             Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
             Node node;
+
             if (Input.GetMouseButton(0))
             {
                 node = GetNode(position);
-                if (node != null && node.Walkable)
+
+                if (CanEditNode(node, false))
+                {
                     node.Walkable = !node.Walkable;
+                }
             }
+
             else if (Input.GetMouseButton(1))
             {
                 node = GetNode(position);
-                if (node != null)
-                    node.Walkable = true;
+
+                if (CanEditNode(node, true))
+                {
+                    node.Walkable = !node.Walkable;
+                }
             }
 
         }
     }
-
 
     Vector2 GetCenterOfGrid()
     {
@@ -215,18 +213,11 @@ public class Grid : MonoBehaviour
                 Node n = GetNode(walkableObjects[i].transform.position);
                 SetNodeWalkable(n, true);
 
-
-
-
-
-
                 List<Node> nodes = GetAdjacents(n);
                 for (int j = 0; j < nodes.Count; j++)
                 {
                     SetNodeWalkable(nodes[j], true);
                 }
-
-
             }
         }
     }
@@ -246,62 +237,27 @@ public class Grid : MonoBehaviour
             }
         }
     }
-    #endregion
-
-
-    #region IObserver
-
-    void Subscribe()
-    {
-        EventManager.instance.AddListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
-        EventManager.instance.AddListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
-        EventManager.instance.AddListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
-    }
-
-    void UnSubscribe()
-    {
-        EventManager.instance.RemoveListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
-        EventManager.instance.RemoveListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
-        EventManager.instance.RemoveListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
-    }
-
-    #endregion
-
-    #region Events
-
-    void OnRequestCenterOfGrid(Events.RequestCenterOfGrid @event)
-    {
-        Vector2 center = GetCenterOfGrid();
-
-        Node node = null;
-        if (_grid[(int)center.x, (int)center.y] != null)
-        {
-            node = _grid[(int)center.x, (int)center.y];
-        }
-        if (@event._callback != null)
-        {
-            @event._callback(node.myWorldPosition);
-        }
-    }
-
-
-    void OnSetWalkablePointsInGrid(Events.SetWalkableInGrid @event)
-    {
-        SetNodesWalkable(@event._points);
-    }
-
-    void OnRequestCreateGrid(Events.RequestCreateGrid @event)
-    {
-        CreateGrid(@event._callback);
-    }
-
-    #endregion
 
     float GetNodeDiameter(float radius)
     {
         return radius * 2;
     }
 
+    List<Node> GetWallNodes()
+    {
+        return _wallNodes;
+    }
+
+    bool CanEditNode(Node node, bool walkingState)
+    {
+        if (node != null && !IsNodeWall(node) && node.Walkable == walkingState)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    #endregion
 
 
     #region Grid Creation    
@@ -314,18 +270,11 @@ public class Grid : MonoBehaviour
         gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / GetNodeDiameter(_nodeRadius));
         gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / GetNodeDiameter(_nodeRadius));
 
-        //Debug.Log("gridSizeX/Y: " + gridSizeX + "," + gridSizeY);
-
-
         _myNodes.Clear();
 
-
-
         _grid = new Node[gridSizeX, gridSizeY];
+
         Vector3 bottomLeftCorner = transform.position;
-
-        //Debug.Log("bottomLeftCorner " + bottomLeftCorner);
-
 
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -344,11 +293,13 @@ public class Grid : MonoBehaviour
 
                 if (x == 0)
                     isWall = true;
+
                 if (y == 0)
                     isWall = true;
 
                 if (x == this.gridSizeX - 1)
                     isWall = true;
+
                 if (y == this.gridSizeY - 1)
                     isWall = true;
 
@@ -472,10 +423,6 @@ public class Grid : MonoBehaviour
             {
                 Node node = this.GetNode(_envGrid._wallNodes[i].myWorldPosition);
                 List<Node> nodes = this.GetAdjacents(node);
-                for (int j = 0; j < nodes.Count; j++)
-                {
-                    nodes[j].onWall = true;
-                }
             }
         }
         collisionSet = true;
@@ -496,8 +443,6 @@ public class Grid : MonoBehaviour
         }
     }
     #endregion
-
-
 
 
     #region Grid Querying    
@@ -582,10 +527,69 @@ public class Grid : MonoBehaviour
         return closestNode;
     }
 
+    bool IsNodeWall(Node node)
+    {
+        if(GetWallNodes() != null)
+        {
+            if (GetWallNodes().Contains(node))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     #endregion
 
 
+    #region IObserver
+
+    void Subscribe()
+    {
+        EventManager.instance.AddListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
+        EventManager.instance.AddListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
+        EventManager.instance.AddListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
+    }
+
+    void UnSubscribe()
+    {
+        EventManager.instance.RemoveListener<Events.RequestCenterOfGrid>(OnRequestCenterOfGrid);
+        EventManager.instance.RemoveListener<Events.SetWalkableInGrid>(OnSetWalkablePointsInGrid);
+        EventManager.instance.RemoveListener<Events.RequestCreateGrid>(OnRequestCreateGrid);
+    }
+
+    #endregion
+
+
+    #region Events
+
+    void OnRequestCenterOfGrid(Events.RequestCenterOfGrid @event)
+    {
+        Vector2 center = GetCenterOfGrid();
+
+        Node node = null;
+        if (_grid[(int)center.x, (int)center.y] != null)
+        {
+            node = _grid[(int)center.x, (int)center.y];
+        }
+        if (@event._callback != null)
+        {
+            @event._callback(node.myWorldPosition);
+        }
+    }
+
+
+    void OnSetWalkablePointsInGrid(Events.SetWalkableInGrid @event)
+    {
+        SetNodesWalkable(@event._points);
+    }
+
+    void OnRequestCreateGrid(Events.RequestCreateGrid @event)
+    {
+        CreateGrid(@event._callback);
+    }
+
+    #endregion
 
 
     #region Debugging

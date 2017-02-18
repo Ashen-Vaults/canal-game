@@ -86,13 +86,6 @@ namespace PathFinder
         }
         #endregion IQueueable Properties
 
-
-        public Node(bool _walkable, Vector3 _pos)
-        {
-            this._walkable = _walkable;
-            this.myWorldPosition = _pos;
-        }
-
         /// <summary>
         /// The main Constructor which is called
         /// </summary>
@@ -108,44 +101,7 @@ namespace PathFinder
             gridY = _y;
             this.onWall = isWall;
             this.centerNode = isCenter;
-
         }
-
-        /// <summary>
-        /// The main Constructor which is called
-        /// </summary>
-        /// <param name="_walkable">Whether or not it will be a considered tile when a path is created</param>
-        /// <param name="_pos">the world position</param>
-        /// <param name="_x">the x position in the grid</param>
-        /// <param name="_y">the y position in the grid</param>
-        public Node(bool _walkable, Vector3 _pos, int _x, int _y, Vector3 _size)
-        {
-            this._walkable = _walkable;
-            this.myWorldPosition = _pos;
-            gridX = _x;
-            gridY = _y;
-            this.mySize = _size;
-
-        }
-
-        /// <summary>
-        /// The main Constructor which is called
-        /// </summary>
-        /// <param name="_walkable">Whether or not it will be a considered tile when a path is created</param>
-        /// <param name="_pos">the world position</param>
-        /// <param name="_x">the x position in the grid</param>
-        /// <param name="_y">the y position in the grid</param>
-        public Node(bool _walkable, Transform _parent, Vector3 _localPos, int _x, int _y, Vector3 _size)
-        {
-            this._walkable = _walkable;
-            this.myParentTransform = _parent;
-            this.myWorldPosition = _localPos;
-            gridX = _x;
-            gridY = _y;
-            this.mySize = _size;
-
-        }
-
 
         public override string ToString()
         {
