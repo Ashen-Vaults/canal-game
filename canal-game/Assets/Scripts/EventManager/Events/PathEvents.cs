@@ -53,6 +53,15 @@ public partial class Events
             _callback = callback;
         }
     }
+
+    public struct SendCenterOfGrid : IGameEvent
+    {
+        public readonly Vector2 _center;
+        public SendCenterOfGrid(Vector2 center)
+        {
+            _center = center;
+        }
+    }
 }
 
 

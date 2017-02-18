@@ -119,8 +119,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _seed: test
-  _rooms: 250
-  _radius: 10
+  _rooms: 750
+  _radius: 15
   _circleColor: {r: 1, g: 0, b: 0, a: 0}
   _points: []
   _prefab: {fileID: 1326207431156794, guid: eaea1e3d858652949967b757210d3e0b, type: 2}
@@ -134,7 +134,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 301928003}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 25, y: 25, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1414934550}
@@ -153,6 +153,7 @@ GameObject:
   - component: {fileID: 1414934548}
   - component: {fileID: 1414934547}
   - component: {fileID: 1414934546}
+  - component: {fileID: 1414934545}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -160,6 +161,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1414934545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1414934544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91a9c0c7a0852c441896aa55dfffaa33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _distance:
+    minValue: 0
+    maxValue: 0
+  _maxSpeed: 0
+  _gizmo_target: {fileID: 0}
+  _minSize: 0
+  _ScreenEdgeBuffer: 0
+  _dampTime: 0
 --- !u!81 &1414934546
 AudioListener:
   m_ObjectHideFlags: 0

@@ -42,6 +42,8 @@ public class CameraController : MonoBehaviour
 
     void Awake()
     {
+        Subscribe();
+
         _camera = GetCamera(OnError);
         _gizmo_target = FindTarget();
     }
@@ -191,6 +193,35 @@ public class CameraController : MonoBehaviour
 
         return size;
     }
+
+    void SetCameraSize(Vector2 worldSize)
+    {
+        _camera.orthographicSize = ((worldSize.x * 4) + (worldSize.y * 4)) / 6.6F;
+    }
+
+    #region IObserver
+
+    void Subscribe()
+    {
+        EventManager.instance.AddListener<Events.SendCenterOfGrid>(OnSendCenterOfGrid);
+    }
+
+    void UnSubscribe()
+    {
+        EventManager.instance.RemoveListener<Events.SendCenterOfGrid>(OnSendCenterOfGrid);
+    }
+
+    #endregion
+
+
+    #region Events
+
+    void OnSendCenterOfGrid(Events.SendCenterOfGrid @event)
+    {
+        SetCameraSize(@event._center);
+    }
+
+    #endregion
 
 
     #region Utility

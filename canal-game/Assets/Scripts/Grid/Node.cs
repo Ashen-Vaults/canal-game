@@ -46,7 +46,6 @@ namespace PathFinder
 
         public Node myParent;
 
-        public bool centerNode;
         #endregion GridProperties;
 
 
@@ -93,14 +92,13 @@ namespace PathFinder
         /// <param name="_pos">the world position</param>
         /// <param name="_x">the x position in the grid</param>
         /// <param name="_y">the y position in the grid</param>
-        public Node(bool _walkable, Vector3 _pos, int _x, int _y, bool isWall, bool isCenter)
+        public Node(bool _walkable, Vector3 _pos, int _x, int _y, bool isWall)
         {
             this._walkable = _walkable;
             this.myWorldPosition = _pos;
             gridX = _x;
             gridY = _y;
             this.onWall = isWall;
-            this.centerNode = isCenter;
         }
 
         public override string ToString()

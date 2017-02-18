@@ -178,8 +178,8 @@ public class Grid : MonoBehaviour
 
     Vector2 GetCenterOfGrid()
     {
-        float x = Mathf.RoundToInt(gridSizeX / 2);
-        float y = Mathf.RoundToInt(gridSizeY / 2);
+        float x = Mathf.RoundToInt(this._gridWorldSize.x / 4);
+        float y = Mathf.RoundToInt(this._gridWorldSize.y / 4);
         return new Vector2(x, y);
     }
 
@@ -303,12 +303,7 @@ public class Grid : MonoBehaviour
                 if (y == this.gridSizeY - 1)
                     isWall = true;
 
-                bool isCenter = false;
-
-                if (IsCenter(worldPoint))
-                    isCenter = true;
-
-                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
+                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall);
                 if (_grid[x, y].Walkable != true)
                     _grid[x, y].occupierCount += 1;
                 _myNodes.Add(_grid[x, y]);
@@ -378,12 +373,7 @@ public class Grid : MonoBehaviour
                 if (y == this.gridSizeY - 1)
                     isWall = true;
 
-                bool isCenter = false;
-
-                if (IsCenter(worldPoint))
-                    isCenter = true;
-
-                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall, isCenter);
+                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall);
                 if (_grid[x, y].Walkable != true)
                     _grid[x, y].occupierCount += 1;
                 _myNodes.Add(_grid[x, y]);
@@ -567,15 +557,12 @@ public class Grid : MonoBehaviour
     {
         Vector2 center = GetCenterOfGrid();
 
-        Node node = null;
-        if (_grid[(int)center.x, (int)center.y] != null)
-        {
-            node = _grid[(int)center.x, (int)center.y];
-        }
         if (@event._callback != null)
         {
-            @event._callback(node.myWorldPosition);
+            @event._callback(center);
         }
+
+        EventManager.instance.QueueEvent(new Events.SendCenterOfGrid(center));
     }
 
 
@@ -639,7 +626,7 @@ public class Grid : MonoBehaviour
                         Gizmos.DrawWireCube(n.myWorldPosition, Vector3.one * (GetNodeDiameter(_nodeRadius) / 2));
                     }
 
-                    if (_showLabels && n.centerNode)
+                    if (_showLabels)
                     {
                         UnityEditor.Handles.Label(n.myWorldPosition, n.gridX.ToString() + " -  " + n.gridY.ToString());
                     }
