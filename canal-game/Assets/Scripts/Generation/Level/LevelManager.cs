@@ -57,9 +57,9 @@ public class LevelManager : MonoBehaviour
     {
         UnityEngine.Random.InitState(GetSeed());
 
-        CreateLevel(CreatePointInSpiral, _radius, _rooms, _seed, CreateNormalSize);
+        //CreateLevel(CreatePointInSpiral, _radius, _rooms, _seed, CreateNormalSize);
 
-        //CreateLevel(CreateRandomPointsInCircle, _radius, _rooms, _seed, CreateRandomSize);
+        CreateLevel(CreateRandomPointsInCircle, _radius, _rooms, _seed, CreateRandomSize);
     }
 
     void CreateLevel(Func<float,int, List<Point>> createPoints, float radius, int numberOfRooms, string seed, Func<System.Random, Vector2> onSetLocalScale)

@@ -8,6 +8,9 @@ public class Grid : MonoBehaviour
 {
     #region Properties
 
+    [SerializeField]
+    List<Cell> _cells;
+
     #region Grid Options
     [Header("Grid Options")]
     [SerializeField]
@@ -129,7 +132,7 @@ public class Grid : MonoBehaviour
         if (_createOnInit)
         {
             //this.CreateGrid(()=> { Debug.Log("Created Grid"); });
-            StartCoroutine(CreateNodes(_timeBetweenNodeCreation));
+            //StartCoroutine(CreateNodes(_timeBetweenNodeCreation));
         }
 
         if (_randomObstacles)
@@ -260,6 +263,9 @@ public class Grid : MonoBehaviour
     #endregion
 
 
+
+//    CreateNodeInGrid(int x, int y)
+
     #region Grid Creation    
     /// <summary>
     /// Creates the grid.
@@ -284,111 +290,44 @@ public class Grid : MonoBehaviour
 
                 //worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius + NodeRadius) + Vector3.up * (y * NodeRadius + gridSizeY);
                 worldPoint = bottomLeftCorner + Vector3.right * (x * _nodeRadius) + Vector3.up * (y * _nodeRadius);
+
                 if (x == 0 && y == 0)
+                {
                     Debug.Log("FirstNode " + worldPoint);
+                }
 
                 bool walkable = (Physics2D.OverlapCircle(worldPoint, _nodeRadius, this._unwalkableMask));
 
-                bool isWall = false;
+                bool wall = IsPointWall(x, y);
 
-                if (x == 0)
-                    isWall = true;
+                _grid[x, y] = new Node(walkable, worldPoint, x, y, wall);
 
-                if (y == 0)
-                    isWall = true;
-
-                if (x == this.gridSizeX - 1)
-                    isWall = true;
-
-                if (y == this.gridSizeY - 1)
-                    isWall = true;
-
-                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall);
                 if (_grid[x, y].Walkable != true)
                     _grid[x, y].occupierCount += 1;
+
                 _myNodes.Add(_grid[x, y]);
 
 
-                if (isWall)
+                if (wall)
+                {
                     _wallNodes.Add(_grid[x, y]);
-
-                if (walkable == false)
-                    _unwalkableNodes.Add(_grid[x, y]);
-            }
-        }
-
-        if (!this._isMovementGrid && this._movementGrid != null)
-            this._movementGrid.CreateGrid(callback);
-
-        if (callback != null)
-        {
-            callback();
-        }
-    }
-
-    /// <summary>
-    /// Creates the nodes.
-    /// </summary>
-    /// <returns></returns>
-    IEnumerator CreateNodes(float waitTime)
-    {
-        gridSizeX = Mathf.RoundToInt(_gridWorldSize.x / GetNodeDiameter(_nodeRadius));
-        gridSizeY = Mathf.RoundToInt(_gridWorldSize.y / GetNodeDiameter(_nodeRadius));
-
-        //Debug.Log("gridSizeX/Y: " + gridSizeX + "," + gridSizeY);
-
-
-        _myNodes.Clear();
-
-
-
-        _grid = new Node[gridSizeX, gridSizeY];
-        Vector3 bottomLeftCorner = transform.position;
-
-        //Debug.Log("bottomLeftCorner " + bottomLeftCorner);
-
-
-        for (int x = 0; x < gridSizeX; x++)
-        {
-            for (int y = 0; y < gridSizeY; y++)
-            {
-                Vector3 worldPoint = Vector3.zero;
-
-                //worldPoint = bottomLeftCorner + Vector3.right * (x * NodeRadius + NodeRadius) + Vector3.up * (y * NodeRadius + gridSizeY);
-                worldPoint = bottomLeftCorner + Vector3.right * (x * _nodeRadius) + Vector3.up * (y * _nodeRadius);
-                if (x == 0 && y == 0)
-                    Debug.Log("FirstNode " + worldPoint);
-
-                bool walkable = (Physics2D.OverlapCircle(worldPoint, _nodeRadius, this._unwalkableMask));
-
-                bool isWall = false;
-
-                if (x == 0)
-                    isWall = true;
-                if (y == 0)
-                    isWall = true;
-
-                if (x == this.gridSizeX - 1)
-                    isWall = true;
-                if (y == this.gridSizeY - 1)
-                    isWall = true;
-
-                _grid[x, y] = new Node(walkable, worldPoint, x, y, isWall);
-                if (_grid[x, y].Walkable != true)
-                    _grid[x, y].occupierCount += 1;
-                _myNodes.Add(_grid[x, y]);
-
-
-                if (isWall)
-                    _wallNodes.Add(_grid[x, y]);
+                }
 
                 if (walkable == false)
                 {
                     _unwalkableNodes.Add(_grid[x, y]);
                 }
-
-                yield return new WaitForSeconds(waitTime);
             }
+        }
+
+        if (!this._isMovementGrid && this._movementGrid != null)
+        {
+            this._movementGrid.CreateGrid(callback);
+        }
+
+        if (callback != null)
+        {
+            callback();
         }
     }
 
@@ -526,6 +465,23 @@ public class Grid : MonoBehaviour
                 return true;
             }
         }
+        else
+        {
+            IsPointWall(node.gridX, node.gridY);
+        }
+        return false;
+    }
+
+    bool IsPointWall(float x, float y)
+    {
+        if (x == 0) return true;
+
+        if (y == 0) return true;
+
+        if (x == this.gridSizeX - 1) return true;
+
+        if (y == this.gridSizeY - 1) return true;
+
         return false;
     }
 

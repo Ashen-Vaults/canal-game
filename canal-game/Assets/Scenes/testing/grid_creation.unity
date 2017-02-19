@@ -119,7 +119,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _seed: test
-  _rooms: 750
+  _rooms: 100
   _radius: 15
   _circleColor: {r: 1, g: 0, b: 0, a: 0}
   _points: []
@@ -275,6 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38467938fea23c7469a8cc0fd234ad67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _cells: []
   _gridWorldSize: {x: 100, y: 100}
   _envGrid: {fileID: 0}
   _movementGrid: {fileID: 0}
